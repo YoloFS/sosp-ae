@@ -1,0 +1,12 @@
+[submodule "filesystem"]
+	path = filesystem
+	url = https://github.com/YoloFS/filesystem.git
+	branch = main
+[submodule "perf-eval"]
+	path = perf-eval
+	url = https://github.com/YoloFS/perf-eval.git
+	branch = main
+[submodule "perf-results"]
+	path = perf-results
+	url = https://github.com/YoloFS/perf-results.git
+	branch = main
