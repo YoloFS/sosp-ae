@@ -82,8 +82,10 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-`perf-eval/setup.sh` installs the benchmark-specific dependencies (fio, plotting
-env, and the comparison filesystems OverlayFS/BranchFS used as baselines).
+`perf-eval/setup.sh` installs the generic benchmark dependencies (fio, perf
+tools, bpftrace). The BranchFS baseline is built and installed separately with
+`perf-eval/scripts/setup_branchfs.sh` (see Full reproduction below); OverlayFS
+is part of the stock kernel and needs no extra setup.
 
 ## Kick-the-tires (~5 min)
 
@@ -126,7 +128,9 @@ and per-experiment resource notes.
 
 ```bash
 cd perf-eval
-./setup.sh                 # one-time: install deps + baseline filesystems
+./setup.sh                 # one-time: generic deps (fio, perf tools, bpftrace)
+./scripts/setup_branchfs.sh   # one-time: build + install the BranchFS baseline
+                              # (needed for the BranchFS bars in every figure/table)
 
 sudo ./micro.sh            # microbenchmarks: write/overwrite/rename/unlink + snapshot-scalability
 sudo ./macro.sh            # macrobenchmark: the realistic kernel-dev workload
