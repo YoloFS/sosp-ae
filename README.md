@@ -150,7 +150,14 @@ cd perf-eval
 ```
 
 `report.sh` produces a self-contained HTML dashboard with one page per workload
-(plots + tables) — the easiest way to eyeball results against the paper.
+(plots + tables) — the easiest way to eyeball results against the paper. On the
+CloudLab machine (no local browser), serve it over HTTP and open it from your
+laptop (forward the port with `ssh -L 8000:localhost:8000 <cloudlab-host>`):
+
+```bash
+python -m http.server -d ~/sosp-ae/perf-results/report/   # then browse http://localhost:8000/
+```
+
 `paper.sh` regenerates the exact figures/tables used in the paper into a local
 `paper/generated/` directory.
 
