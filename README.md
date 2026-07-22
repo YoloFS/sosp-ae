@@ -38,7 +38,7 @@ The paper's numbers come from **CloudLab** `c6525-25g`: AMD EPYC 7302P (16-core,
 3 GHz), 128 GB DDR4-3200, Ubuntu 24.04, Linux 6.8, Ext4 on a SATA SSD.
 Performance is hardware-sensitive, so **we will provide each reviewer with
 access to a matching CloudLab machine** — please request access through the
-HotCRP artifact submission / AE chairs and we will provision one. The machine
+HotCRP artifact submission and we will provision one. The machine
 comes with the OS, kernel headers, and toolchains ready.
 
 The artifact also runs on other recent Linux hosts (see dependencies), but exact
@@ -91,16 +91,24 @@ Confirm the module builds, loads, and a benchmark runs end to end:
 
 ```bash
 # 1. build + install the kernel module and the `yolo` CLI
-make -C filesystem install
+cd filesystem
+make install
 
-# 2. run one microbenchmark for one backend, 1 iteration
+# 2. run tests
+make test
+
+# 3. build the benchmark harness and run one microbenchmark (1 iteration)
 cd perf-eval
+cargo build --release
 sudo ./target/release/yolo-bench --workload write-files --backend yolo-no-perm --runs 1
-# (build first with: cargo build --release)
 ```
 
 You should see a line like `iter 1/1 … NNN ms (init … + stage … + commit …)` and
 an HTML report written under `perf-results/report/`.
+
+The `make test` step also runs in CI on every push, so you can confirm the
+expected result without a machine:
+<https://github.com/YoloFS/filesystem/actions>.
 
 ## Full reproduction
 
@@ -136,6 +144,11 @@ cd perf-eval
 `paper.sh` regenerates the exact figures/tables used in the paper into a local
 `paper/generated/` directory.
 
+**Prefer not to run anything first?** The paper's reference run is published as a
+rendered dashboard you can browse directly:
+<https://yolofs.github.io/perf-results/report/>. It's the same output `report.sh`
+generates, from the `perf-results` committed in this artifact.
+
 ### Comparing to the paper
 
 - **Single-file I/O table**: compare `paper/generated/fio.tex` (or the fio pages
@@ -152,18 +165,8 @@ Absolute numbers depend on hardware; on the provided CloudLab machine they shoul
 match the paper closely. On other hardware, expect the same relative ordering
 and trends.
 
-## Building and testing the filesystem directly (optional)
-
-```bash
-cd filesystem
-make            # build kernel module + CLI
-make test       # unit + end-to-end tests (loads/unloads the module)
-```
-
-See `filesystem/README.md` and `filesystem/docs/` for architecture, the
-staging/journal design, and the permission model.
-
 ## License
 
-This artifact is distributed under the MIT License (see `LICENSE`), which permits
-comparison and extension.
+This artifact is distributed under the GNU General Public License v2.0 (see
+`LICENSE`), matching the YoloFS kernel module. It permits comparison and
+extension.
