@@ -93,10 +93,20 @@ Confirm the module builds, loads, and a benchmark runs end to end:
 # 1. build + install the kernel module and the `yolo` CLI
 cd filesystem
 make install
+```
+After this, you should have `yolo` in your path and `yolo --help` prints usage.
 
+
+```bash
 # 2. run tests
 make test
+```
 
+We also run `make test` in CI on every push, so you can confirm the
+expected result without a machine:
+<https://github.com/YoloFS/filesystem/actions>.
+
+```bash
 # 3. build the benchmark harness and run one microbenchmark (1 iteration)
 cd perf-eval
 cargo build --release
@@ -105,10 +115,6 @@ sudo ./target/release/yolo-bench --workload write-files --backend yolo-no-perm -
 
 You should see a line like `iter 1/1 … NNN ms (init … + stage … + commit …)` and
 an HTML report written under `perf-results/report/`.
-
-The `make test` step also runs in CI on every push, so you can confirm the
-expected result without a machine:
-<https://github.com/YoloFS/filesystem/actions>.
 
 ## Full reproduction
 
