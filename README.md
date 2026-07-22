@@ -23,11 +23,6 @@ This artifact reproduces the **performance evaluation (§6)** of the paper:
 | Figure (Snapshot scalability) | YoloFS stays flat as snapshots grow; OverlayFS fails at ~50 snapshots; BranchFS degrades | `perf-eval` checkpoint-scaling |
 | Figure (Realistic workload) | YoloFS ≈ Ext4 on a kernel-dev workload (+3.5 s to commit 100k files); OverlayFS 18% slower | `perf-eval` dev-workflow (macro) |
 
-**Out of scope:** the agent-behavior study (agent success/interaction tables) is
-**not** part of this artifact — it requires live coding-agent APIs and pinned
-agent-CLI versions that we cannot provision for reviewers. This artifact is the
-systems/performance reproduction only.
-
 **Target badges:** Artifacts Available, Functional, and Results Reproduced.
 
 ## ⚠️ Warning: this loads a kernel module
@@ -35,8 +30,7 @@ systems/performance reproduction only.
 `filesystem/` builds and loads a **Linux kernel module** (`insmod`/`rmmod`,
 requires `root`). A buggy or interrupted run can wedge mounts or require a
 reboot. **Do not run this on a machine you care about.** Use the CloudLab
-machine we provide (below), or a disposable VM. The module is not malicious and
-does not phone home; it does mount a filesystem and load kernel code.
+machine we provide (below), or a disposable VM.
 
 ## Hardware access — we provide a CloudLab machine
 
