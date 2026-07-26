@@ -75,9 +75,10 @@ On the provided CloudLab machine these are preinstalled. On your own Ubuntu
 
 ```bash
 sudo apt-get update
-sudo apt-get install -y build-essential linux-headers-$(uname -r) fio git python3
+sudo apt-get install -y build-essential linux-headers-$(uname -r) fio git python3 libcap2-bin
 # Rust toolchain (stable)
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+source "$HOME/.cargo/env"
 # uv (Python env/plotting for the report figures)
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
