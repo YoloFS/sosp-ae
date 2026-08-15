@@ -78,7 +78,6 @@ sudo apt-get update
 sudo apt-get install -y build-essential linux-headers-$(uname -r) fio git python3 libcap2-bin
 # Rust toolchain (stable)
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-source "$HOME/.cargo/env"
 # uv (Python env/plotting for the report figures)
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
@@ -133,9 +132,8 @@ cd perf-eval
 ./scripts/setup_branchfs.sh   # one-time: build + install the BranchFS baseline
                               # (needed for the BranchFS bars in every figure/table)
 
-sudo ./micro.sh            # microbenchmarks: write/overwrite/rename/unlink + snapshot-scalability
-sudo ./macro.sh            # macrobenchmark: the realistic kernel-dev workload
-sudo cargo run --release -- --op   # per-op benchmarks: fio (single-file I/O) + metadata latency
+./micro.sh            # microbenchmarks: write/overwrite/rename/unlink + snapshot-scalability
+./macro.sh            # macrobenchmark: the realistic kernel-dev workload
 ```
 
 Results accumulate in `perf-results/report/results.json` (each run merges in,
