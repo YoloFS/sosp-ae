@@ -1,4 +1,5 @@
-# YoloFS — SOSP 2026 Artifact
+# YoloFS — SOSP 2026 Artifact [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21959241.svg)](https://doi.org/10.5281/zenodo.21959241)
+
 
 This is the artifact for the SOSP 2026 paper:
 
@@ -6,6 +7,7 @@ This is the artifact for the SOSP 2026 paper:
 > Filesystems for Agent Safety and Autonomy**
 > Shawn (Wanxiang) Zhong, Junxuan Liao, et al. — University of Wisconsin–Madison
 > arXiv: [2604.13536](https://arxiv.org/abs/2604.13536) · Project: <https://yolofs.github.io/>
+> Archived artifact: <https://zenodo.org/records/21959241>
 
 YoloFS (`\yolofs`) is a stackable Linux filesystem that gives coding agents a
 safe place to work: it **stages** every mutation for review, supports
@@ -20,7 +22,7 @@ This artifact reproduces the **performance evaluation (§6)** of the paper:
 |---|---|---|
 | Table (Single-file I/O) | YoloFS adds ~no overhead to 1 GB fio read/write; OverlayFS/BranchFS add overhead | `perf-eval` fio benchmarks |
 | Figure (Metadata operations) | YoloFS ≤ OverlayFS on metadata; faster than Ext4 for internal readdir/rename/unlink; BranchFS >20× slower; gating overhead negligible (≤4% for stat) | `perf-eval` metadata benchmarks |
-| Figure (Snapshot scalability) | YoloFS stays flat as snapshots grow; OverlayFS fails at ~50 snapshots; BranchFS degrades | `perf-eval` checkpoint-scaling |
+| Figure (Snapshot scalability) | YoloFS stays flat as snapshots grow; OverlayFS fails at ~50 snapshots; BranchFS degrades | `perf-eval` checkpoint-scaling (`snapshot.sh`) |
 | Figure (Realistic workload) | YoloFS ≈ Ext4 on a kernel-dev workload (+3.5 s to commit 100k files); OverlayFS 18% slower | `perf-eval` dev-workflow (macro) |
 
 **Target badges:** Artifacts Available, Functional, and Results Reproduced.
@@ -31,6 +33,30 @@ This artifact reproduces the **performance evaluation (§6)** of the paper:
 requires `root`). A buggy or interrupted run can wedge mounts or require a
 reboot. **Do not run this on a machine you care about.** Use the CloudLab
 machine we provide (below), or a disposable VM.
+
+### What needs root, and what does not
+
+The privilege boundary is narrow, and the benchmarks stay on the unprivileged
+side of it:
+
+| Step | Privilege |
+|---|---|
+| `make install` in `filesystem/` (installs `yolofs.ko` and the `yolo` CLI) | **root** (one time; `make` prompts for `sudo` itself) |
+| `yolo reload` / `yolo unload` (`insmod`/`rmmod`) | no `sudo` — the installed `yolo` CLI carries `cap_sys_admin,cap_sys_module` file capabilities |
+| `yolo-bench` itself, and the YoloFS and BranchFS (FUSE) backends | unprivileged |
+| the OverlayFS baseline | shells out to `sudo mount -t overlay` / `sudo umount` per iteration |
+| `report.sh` / `paper.sh` (plots and tables) | unprivileged; no module needed |
+| `yolo-bench profile` (§7 of `perf-eval/README.md`) | invokes `sudo` internally for `perf` and `bpftrace` |
+
+You therefore do **not** run `micro.sh`, `macro.sh`, or `snapshot.sh` under
+`sudo`. They install and load the module through the capability-granted `yolo`
+CLI, run the benchmarks as your own user, and unload the module on exit —
+including when a benchmark fails partway through, so a failed run cannot leave
+a wedged mount behind. Your account does need **passwordless `sudo`** (as on the
+provided CloudLab machine) for the two comparison paths that shell out to it:
+the OverlayFS baseline's mounts and the optional profiler. Without it, the
+YoloFS, native, and BranchFS results still run to completion; only the
+OverlayFS bars are missing.
 
 ## Hardware access — we provide a CloudLab machine
 
@@ -58,8 +84,9 @@ sosp-ae/
 
 ## Getting the artifact
 
-The archival copy (with a DOI) is on Zenodo (see the artifact submission). To
-work from source, clone with submodules:
+The archival copy is permanently available on Zenodo:
+**<https://zenodo.org/records/21959241>**. To work from source, clone with
+submodules:
 
 ```bash
 git clone --recurse-submodules https://github.com/YoloFS/sosp-ae.git
@@ -112,7 +139,9 @@ expected result without a machine:
 # 3. build the benchmark harness and run one microbenchmark (1 iteration)
 cd perf-eval
 cargo build --release
-sudo ./target/release/yolo-bench --workload write-files --backend yolo-no-perm --runs 1
+yolo reload    # load the module (the `yolo` CLI is capability-granted; no sudo)
+./target/release/yolo-bench --workload write-files --backend yolo-no-perm --runs 1
+yolo unload
 ```
 
 You should see a line like `iter 1/1 … NNN ms (init … + stage … + commit …)` and
@@ -132,9 +161,36 @@ cd perf-eval
 ./scripts/setup_branchfs.sh   # one-time: build + install the BranchFS baseline
                               # (needed for the BranchFS bars in every figure/table)
 
-./micro.sh            # microbenchmarks: write/overwrite/rename/unlink + snapshot-scalability
+./micro.sh            # microbenchmarks: write/overwrite/rename/unlink
 ./macro.sh            # macrobenchmark: the realistic kernel-dev workload
 ```
+
+These scripts are thin wrappers around the `yolo-bench` harness: each one
+installs the module, loads it, runs the harness with one selection flag, and
+unloads on exit (including on failure or Ctrl-C). The per-op benchmarks — fio
+and the metadata operations behind the Table and the metadata Figure — are the
+harness's third selection flag, `--op`, and run the same way:
+
+```bash
+make -C ../filesystem install && yolo reload   # same two steps micro.sh/macro.sh do
+cargo run --release -- --op                    # add --op-group fio | meta to narrow
+yolo unload
+```
+
+**Before the first `./macro.sh`**: it builds a full clone of the Linux kernel at
+`~/.cache/yolo-bench/linux` (~3 GB downloaded, ~8 GB on disk, several GB of RAM
+while git resolves deltas). The clone must keep full history — `dev-workflow`
+checks out a pinned base commit — so it cannot be made shallow. On a small or
+network-restricted machine, pre-seed a mirror first and the fixture is built
+from it locally, with no download:
+
+```bash
+git clone --mirror https://github.com/torvalds/linux.git ~/.cache/yolo-bench/linux.git
+```
+
+The provided CloudLab machine already has the fixture cached. Per-experiment
+time, disk, and network costs are tabulated in
+[perf-eval/README.md](perf-eval/README.md#resource-requirements-per-experiment).
 
 Results accumulate in `perf-results/report/results.json` (each run merges in,
 preserving other workloads/backends).
