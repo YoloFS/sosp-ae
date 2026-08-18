@@ -133,7 +133,7 @@ make test
 
 We also run `make test` in CI on every push, so you can confirm the
 expected result without a machine:
-<https://github.com/YoloFS/filesystem/actions>.
+<https://github.com/YoloFS/YoloFS/actions>.
 
 ```bash
 # 3. build the benchmark harness and run one microbenchmark (1 iteration)
